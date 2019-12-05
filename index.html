@@ -5,12 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
-    <title>THis is an public Portofolio Generator</title>
+    <title>TODO</title>
     <link rel="stylesheet" href="css/style.css">
 
 </head>
 
 <body>
+
+    <div class="addForm">
+        <div class="content">
+            <label>Project Name:</label>
+            <input type="text" class="name">
+            <label>Description:</label>
+            <input type="text" class="descrition">
+            <label>Due Date:</label>
+            <input type="text" class="dueDate">
+            <label>Enable High Priority:</label>
+            <input type="checkbox" class="highPriorCB">
+
+            <input type="button" class="acceptBtn" value="Accept">
+            <input type="button" class="cancelBtn" value="Cancel">
+        </div>
+    </div>
+
+    <div class="mainContent">
+        <div class="projectList">
+            <input type="button" class="addButton" value="Add a Project">
+            <h2>Project list</h2>
+            <ul>
+                <li>
+                    <input type="checkbox" class="doneCB">
+                    <label>Project Name</label>
+                    <a href="#">Remove</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="project">
+            <h1>Project Title</h1>
+            <div>
+                <h2>Description: </h2>
+                <p>
+                    What the project is about
+                </p>
+                <span></span>
+            </div>
+
+            <div>
+                <input type="checkbox" class="highPriorCB">
+                <label>High Priority</label>
+            </div>
+
+            <input type="button" value="Edit this Projet">
+
+            <div class="checkList">
+                <h3>Tasks checklist</h3>
+                <ul></ul>
+                <div class="ui">
+                    <input type="text" name="" id="">
+                    <input type="button" value="Add item">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 </body>
 
 <script src="js/model.js"></script>
