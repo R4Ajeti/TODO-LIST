@@ -96,6 +96,15 @@ ListModelator.prototype.display = function display() {
     ul.removeChild(ul.firstChild);
   }
   this.items.forEach((item, index) => {
+    const bc = document.createElement('input');
+    bc.setAttribute('type', 'button');
+    bc.value = 'Complete';
+    //bc.style.display = 'none';
+    bc.onclick = e => {
+      item.completed = true;
+      this.toggleCB(index, e);
+    };
+
     const pb = document.createElement('input');
     pb.setAttribute('type', 'button');
     pb.value = 'Edit';
@@ -134,6 +143,11 @@ ListModelator.prototype.display = function display() {
     li.appendChild(lb);
     li.appendChild(pb);
     li.appendChild(a);
+    if (item.completed == false) {
+      li.appendChild(bc);
+    } else {
+      li.style.backgroundColor = 'green';
+    }
     ul.appendChild(li);
 
     // this.el.querySelector('div.ui input[type="button"]').onclick = () => this.add();
@@ -178,6 +192,7 @@ const Project = function Project(title, description, dueDate, priority) {
   this.checklist = new ListModelator(
     this.el.querySelector('div.checkList > ul')
   );
+  this.completed = false;
 };
 
 Project.prototype.display = function display() {
