@@ -1,48 +1,59 @@
 /* eslint-env browser */
-const Ui = function Ui(modal) {
-  this.modal = modal;
-  const openModalbtn = document.querySelector('.mainContent .addButton');
-  openModalbtn.setAttribute('onclick', 'mUi.modal.show()');
-};
-
-Ui.prototype.openModal = function openModal() {
-  this.modal.show();
-};
 
 const Modal = function Modal() {
   this.el = document.querySelector('.addForm');
-
+  this.nameEl = this.el.querySelector('input.name');
+  this.descEl = this.el.querySelector('input.descrition');
+  this.dueDateEl = this.el.querySelector('input.dueDate');
+  this.highPriorEl = this.el.querySelector('input.highPriorCB');
 
   const cancelBtnEl = document.querySelector('.addForm .cancelBtn');
-  cancelBtnEl.setAttribute('onclick', 'mUi.modal.hide()');
+  cancelBtnEl.onclick = () => this.hide();
 };
 
 Modal.prototype.show = function show() {
   this.el.style.display = 'block';
+
+  const context = this.el;
+  return new Promise(((res, rej) => {
+    const btns = context.querySelectorAll('input[type="button"]');
+
+    btns.forEach((btn) => {
+      const b = btn;
+      b.onclick = (e) => {
+        this.hide();
+        if (e.target.value === 'Accept') {
+          res({
+            name: this.nameEl.value,
+            desc: this.descEl.value,
+            dueDate: this.dueDateEl.value,
+            highPrior: this.highPriorEl.checked,
+          });
+          this.nameEl.value = null;
+          this.descEl.value = null;
+          this.dueDateEl.value = null;
+          this.highPriorEl.checked = false;
+        } else {
+          res(false);
+        }
+        rej(new Error());
+      };
+    });
+  }));
 };
 
 Modal.prototype.hide = function hide() {
   this.el.style.display = 'none';
 };
 
-const CheckList = function CheckList() {
-  this.el = document.querySelector('.project .checkList');
-  this.items = [
-    {
-      done: false,
-      name: 'Todo number 1',
-    },
-    {
-      done: true,
-      name: 'Todo number 2',
-    },
-  ];
-
+const ListModelator = function ListModelator(el) {
+  this.items = [];
+  this.el = el;
   this.display();
 };
 
-CheckList.prototype.display = function display() {
-  const ul = this.el.querySelector('ul');
+ListModelator.prototype.display = function display() {
+  const ul = this.el;
 
   while (ul.firstChild) {
     ul.removeChild(ul.firstChild);
@@ -55,7 +66,7 @@ CheckList.prototype.display = function display() {
     const cb = document.createElement('input');
     cb.setAttribute('type', 'checkbox');
     cb.onclick = (e) => { this.toggleCB(index, e); };
-    cb.checked = item.done;
+    cb.checked = item.checked;
 
     const lb = document.createElement('label');
     lb.textContent = item.name;
@@ -70,36 +81,35 @@ CheckList.prototype.display = function display() {
     li.appendChild(a);
     ul.appendChild(li);
 
-    this.el.querySelector('div.ui input[type="button"]').onclick = () => this.add();
+    // this.el.querySelector('div.ui input[type="button"]').onclick = () => this.add();
   });
 };
 
-CheckList.prototype.toggleCB = function toggleCB(index, e) {
+ListModelator.prototype.toggleCB = function toggleCB(index, e) {
   const el = e.target;
-  this.items[index].done = el.checked;
+  this.items[index].checked = el.checked;
 };
 
-CheckList.prototype.remove = function remove(index) {
+ListModelator.prototype.remove = function remove(index) {
   this.items.splice(index, 1);
   this.display();
 };
 
-CheckList.prototype.add = function add() {
-  const text = this.el.querySelector('div.ui input[type="text"]').value;
-  this.items.push({
-    done: false,
-    name: text,
-  });
+ListModelator.prototype.add = function add(item) {
+  this.items.push(item);
   this.display();
 };
 
 const Project = function Project(title, description, dueDate, priority) {
   this.el = document.querySelector('div.project');
-  this.title = title;
+  this.name = title;
   this.description = description;
   this.dueDate = dueDate;
-  this.priority = priority;
-  this.checklist = new CheckList();
+  this.checked = priority;
+  this.checklist = new ListModelator(this.el.querySelector('div.checkList > ul'));
+
+  const addBtn = this.el.querySelector('div.ui input[type="button"]');
+  addBtn.onclick = () => this.addToCL();
 };
 
 Project.prototype.display = function display() {
@@ -112,9 +122,34 @@ Project.prototype.display = function display() {
   dueDateEl.textContent = `Due date: ${this.dueDate}`;
 };
 
-const mModal = new Modal();
-const mUi = new Ui(mModal);
-mUi.modal.hide();
+Project.prototype.addToCL = function addToCL() {
+  const text = this.el.querySelector('div.ui input[type="text"]').value;
+  this.checklist.add({
+    checked: false,
+    name: text,
+  });
+};
 
-const mProject = new Project('title', 'descri', '10/10/2010', false);
-mProject.display();
+const ProjectList = function ProjectList() {
+  this.el = document.querySelector('div.projectList');
+  this.list = new ListModelator(this.el.querySelector('ul'));
+  this.modal = new Modal();
+
+  const openModalBtn = this.el.querySelector('input[type="button"]');
+  openModalBtn.onclick = () => this.modal.show().then((resp) => {
+    if (resp) {
+      this.addProject(resp);
+    }
+  });
+
+  const mProject = new Project('titulo', 'descri', '10/10/2010', false);
+  this.list.add(mProject);
+};
+
+ProjectList.prototype.addProject = function addProject(resp) {
+  const mProject = new Project(resp.name, resp.desc, resp.dueDate, resp.highPrior);
+  this.list.add(mProject);
+};
+
+// eslint-disable-next-line no-unused-vars
+const mProjectList = new ProjectList();

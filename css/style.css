@@ -45,3 +45,11 @@ div.mainContent {
 div.mainContent > div{
     width: 50%;
 }
+
+div.project{
+    display :block;
+}
+
+div.projectList > ul li:hover{
+    background:#454545;
+}
