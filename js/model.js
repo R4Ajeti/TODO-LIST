@@ -101,6 +101,10 @@ ListModelator.prototype.toggleCB = function toggleCB(index, e) {
 
 ListModelator.prototype.remove = function remove(index) {
   this.items.splice(index, 1);
+  const event = new CustomEvent('removedElement', {
+    detail: { index },
+  });
+  this.el.dispatchEvent(event);
   this.display();
 };
 
@@ -137,7 +141,7 @@ Project.prototype.display = function display() {
   const addBtn = this.el.querySelector('div.ui input[type="button"]');
   addBtn.onclick = () => this.addToCL();
 
-  titleEl.textContent = this.title;
+  titleEl.textContent = this.name;
   descEl.textContent = this.description;
   dueDateEl.textContent = `Due date: ${this.dueDate}`;
 
@@ -159,7 +163,12 @@ const ProjectList = function ProjectList() {
 
   this.list.el.addEventListener('selectElement', (e) => {
     const prj = this.list.items[e.detail.index];
-    if (prj !== null) { prj.display(); }
+    if (prj) { prj.display(); }
+  });
+
+  this.list.el.addEventListener('removedElement', () => {
+    const projectView = document.querySelector('div.project');
+    if (this.list.items.length > 0) { this.list.selectElement(0); } else { projectView.style.display = 'none'; }
   });
 
   const openModalBtn = this.el.querySelector('input[type="button"]');
@@ -177,6 +186,7 @@ const ProjectList = function ProjectList() {
 ProjectList.prototype.addProject = function addProject(resp) {
   const mProject = new Project(resp.name, resp.desc, resp.dueDate, resp.highPrior);
   this.list.add(mProject);
+  this.list.selectElement(this.list.items.length - 1);
 };
 
 // eslint-disable-next-line no-unused-vars
