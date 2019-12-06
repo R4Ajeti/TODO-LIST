@@ -113,8 +113,8 @@ ListModelator.prototype.selectElement = function selectElement(index) {
   const event = new CustomEvent('selectElement', {
     detail: { index },
   });
-
   this.el.dispatchEvent(event);
+
   this.selected = index;
   this.display();
 };
@@ -158,7 +158,8 @@ const ProjectList = function ProjectList() {
   this.modal = new Modal();
 
   this.list.el.addEventListener('selectElement', (e) => {
-    this.list.items[e.detail.index].display();
+    const prj = this.list.items[e.detail.index];
+    if (prj !== null) { prj.display(); }
   });
 
   const openModalBtn = this.el.querySelector('input[type="button"]');
