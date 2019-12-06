@@ -47,7 +47,7 @@ div.mainContent > div{
 }
 
 div.project{
-    display :block;
+    display :none;
 }
 
 div.projectList > ul li:hover{

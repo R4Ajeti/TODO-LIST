@@ -6,6 +6,7 @@ const Modal = function Modal() {
   this.descEl = this.el.querySelector('input.descrition');
   this.dueDateEl = this.el.querySelector('input.dueDate');
   this.highPriorEl = this.el.querySelector('input.highPriorCB');
+  this.buttons = this.el.querySelectorAll('input[type="button"]');
 
   const cancelBtnEl = document.querySelector('.addForm .cancelBtn');
   cancelBtnEl.onclick = () => this.hide();
@@ -14,11 +15,8 @@ const Modal = function Modal() {
 Modal.prototype.show = function show() {
   this.el.style.display = 'block';
 
-  const context = this.el;
   return new Promise(((res, rej) => {
-    const btns = context.querySelectorAll('input[type="button"]');
-
-    btns.forEach((btn) => {
+    this.buttons.forEach((btn) => {
       const b = btn;
       b.onclick = (e) => {
         this.hide();
@@ -29,10 +27,7 @@ Modal.prototype.show = function show() {
             dueDate: this.dueDateEl.value,
             highPrior: this.highPriorEl.checked,
           });
-          this.nameEl.value = null;
-          this.descEl.value = null;
-          this.dueDateEl.value = null;
-          this.highPriorEl.checked = false;
+          this.clear();
         } else {
           res(false);
         }
@@ -42,6 +37,17 @@ Modal.prototype.show = function show() {
   }));
 };
 
+Modal.prototype.clear = function clear() {
+  this.nameEl.value = null;
+  this.descEl.value = null;
+  this.dueDateEl.value = null;
+  this.highPriorEl.checked = false;
+  this.buttons.forEach((btn) => {
+    const b = btn;
+    b.onclick = null;
+  });
+};
+
 Modal.prototype.hide = function hide() {
   this.el.style.display = 'none';
 };
@@ -49,6 +55,7 @@ Modal.prototype.hide = function hide() {
 const ListModelator = function ListModelator(el) {
   this.items = [];
   this.el = el;
+  this.selected = null;
   this.display();
 };
 
@@ -62,6 +69,8 @@ ListModelator.prototype.display = function display() {
   this.items.forEach((item, index) => {
     const li = document.createElement('li');
     li.setAttribute('index', index);
+    li.onclick = () => this.selectElement(index);
+    li.style.backgroundColor = index === this.selected ? '#4a4a4a' : null;
 
     const cb = document.createElement('input');
     cb.setAttribute('type', 'checkbox');
@@ -100,6 +109,11 @@ ListModelator.prototype.add = function add(item) {
   this.display();
 };
 
+ListModelator.prototype.selectElement = function selectElement(index) {
+  this.selected = index;
+  this.display();
+};
+
 const Project = function Project(title, description, dueDate, priority) {
   this.el = document.querySelector('div.project');
   this.name = title;
@@ -113,6 +127,7 @@ const Project = function Project(title, description, dueDate, priority) {
 };
 
 Project.prototype.display = function display() {
+  this.el.style.display = 'block';
   const titleEl = this.el.querySelector('h1');
   const descEl = this.el.querySelector('div > p');
   const dueDateEl = this.el.querySelector('div > span');
@@ -136,11 +151,10 @@ const ProjectList = function ProjectList() {
   this.modal = new Modal();
 
   const openModalBtn = this.el.querySelector('input[type="button"]');
-  openModalBtn.onclick = () => this.modal.show().then((resp) => {
-    if (resp) {
-      this.addProject(resp);
-    }
-  });
+  openModalBtn.onclick = () => this.modal.show()
+    .then((resp) => {
+      if (resp) { this.addProject(resp); }
+    });
 
   const mProject = new Project('titulo', 'descri', '10/10/2010', false);
   this.list.add(mProject);
