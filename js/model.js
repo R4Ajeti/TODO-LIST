@@ -13,6 +13,7 @@ const Modal = function Modal() {
 };
 
 Modal.prototype.show = function show() {
+  this.clear();
   this.el.style.display = 'block';
 
   return new Promise((res, rej) => {
@@ -100,16 +101,15 @@ ListModelator.prototype.display = function display() {
     pb.setAttribute('type', 'button');
     pb.value = 'Edit';
     pb.onclick = () => {
-      // this.makeChangeable(index, e);
-      const event = new CustomEvent('editElement', {
-        detail: {
-          item,
-        },
-      });
-
+      const event = new CustomEvent('editElement', { detail: { item } });
       this.el.dispatchEvent(event);
-      console.log(item);
     };
+
+    const compText = document.createElement('span');
+    compText.textContent = '<<Completed>>';
+    compText.style.backgroundColor = 'green';
+
+
     const li = document.createElement('li');
     li.setAttribute('index', index);
     li.onclick = () => this.selectElement(index);
@@ -121,6 +121,7 @@ ListModelator.prototype.display = function display() {
       this.toggleCB(index, e);
     };
     cb.checked = item.checked;
+
 
     const lb = document.createElement('label');
     lb.textContent = item.name;
@@ -136,8 +137,11 @@ ListModelator.prototype.display = function display() {
     li.appendChild(lb);
     li.appendChild(pb);
     li.appendChild(a);
-    ul.appendChild(li);
 
+    if (item.checked) {
+      li.appendChild(compText);
+    }
+    ul.appendChild(li);
     // this.el.querySelector('div.ui input[type="button"]').onclick = () => this.add();
   });
 };
@@ -145,6 +149,8 @@ ListModelator.prototype.display = function display() {
 ListModelator.prototype.toggleCB = function toggleCB(index, e) {
   const el = e.target;
   this.items[index].checked = el.checked;
+
+  this.display();
 };
 
 ListModelator.prototype.remove = function remove(index) {
@@ -176,7 +182,8 @@ const Project = function Project(title, description, dueDate, priority) {
   this.name = title;
   this.description = description;
   this.dueDate = dueDate;
-  this.checked = priority;
+  this.checked = false;
+  this.priority = priority;
   this.checklist = new ListModelator(
     this.el.querySelector('div.checkList > ul'),
   );
@@ -187,13 +194,30 @@ Project.prototype.display = function display() {
   const titleEl = this.el.querySelector('h1');
   const descEl = this.el.querySelector('div > p');
   const dueDateEl = this.el.querySelector('div > span');
+  const highPriorEl = this.el.querySelector('label.highPriorLB');
 
   const addBtn = this.el.querySelector('div.ui input[type="button"]');
   addBtn.onclick = () => this.addToCL();
 
+  const compText = document.createElement('span');
+
   titleEl.textContent = this.name;
   descEl.textContent = this.description;
   dueDateEl.textContent = `Due date: ${this.dueDate}`;
+
+  if (highPriorEl.firstChild) {
+    highPriorEl.removeChild(highPriorEl.firstChild);
+  }
+
+  if (this.priority) {
+    compText.textContent = '<<High priority>>';
+    compText.style.backgroundColor = 'green';
+    highPriorEl.appendChild(compText);
+  } else {
+    compText.textContent = '<<Low priority>>';
+    compText.style.backgroundColor = 'red';
+    highPriorEl.appendChild(compText);
+  }
 
   this.checklist.display();
 };
