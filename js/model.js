@@ -110,6 +110,11 @@ ListModelator.prototype.add = function add(item) {
 };
 
 ListModelator.prototype.selectElement = function selectElement(index) {
+  const event = new CustomEvent('selectElement', {
+    detail: { index },
+  });
+
+  this.el.dispatchEvent(event);
   this.selected = index;
   this.display();
 };
@@ -121,9 +126,6 @@ const Project = function Project(title, description, dueDate, priority) {
   this.dueDate = dueDate;
   this.checked = priority;
   this.checklist = new ListModelator(this.el.querySelector('div.checkList > ul'));
-
-  const addBtn = this.el.querySelector('div.ui input[type="button"]');
-  addBtn.onclick = () => this.addToCL();
 };
 
 Project.prototype.display = function display() {
@@ -132,9 +134,14 @@ Project.prototype.display = function display() {
   const descEl = this.el.querySelector('div > p');
   const dueDateEl = this.el.querySelector('div > span');
 
+  const addBtn = this.el.querySelector('div.ui input[type="button"]');
+  addBtn.onclick = () => this.addToCL();
+
   titleEl.textContent = this.title;
   descEl.textContent = this.description;
   dueDateEl.textContent = `Due date: ${this.dueDate}`;
+
+  this.checklist.display();
 };
 
 Project.prototype.addToCL = function addToCL() {
@@ -150,6 +157,10 @@ const ProjectList = function ProjectList() {
   this.list = new ListModelator(this.el.querySelector('ul'));
   this.modal = new Modal();
 
+  this.list.el.addEventListener('selectElement', (e) => {
+    this.list.items[e.detail.index].display();
+  });
+
   const openModalBtn = this.el.querySelector('input[type="button"]');
   openModalBtn.onclick = () => this.modal.show()
     .then((resp) => {
@@ -158,6 +169,8 @@ const ProjectList = function ProjectList() {
 
   const mProject = new Project('titulo', 'descri', '10/10/2010', false);
   this.list.add(mProject);
+
+  if (this.list.items.length > 0) { this.list.selectElement(0); }
 };
 
 ProjectList.prototype.addProject = function addProject(resp) {
