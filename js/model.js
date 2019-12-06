@@ -144,6 +144,9 @@ ListModelator.prototype.display = function display() {
     ul.appendChild(li);
     // this.el.querySelector('div.ui input[type="button"]').onclick = () => this.add();
   });
+
+  const event = new Event('changeDetected');
+  window.dispatchEvent(event);
 };
 
 ListModelator.prototype.toggleCB = function toggleCB(index, e) {
@@ -177,16 +180,19 @@ ListModelator.prototype.selectElement = function selectElement(index) {
   this.display();
 };
 
-const Project = function Project(title, description, dueDate, priority) {
+const Project = function Project(title, description, dueDate, priority, checklist = null) {
   this.el = document.querySelector('div.project');
   this.name = title;
   this.description = description;
   this.dueDate = dueDate;
   this.checked = false;
   this.priority = priority;
+
   this.checklist = new ListModelator(
     this.el.querySelector('div.checkList > ul'),
   );
+
+  if (checklist) this.checklist.items = checklist;
 };
 
 Project.prototype.display = function display() {
@@ -230,10 +236,23 @@ Project.prototype.addToCL = function addToCL() {
   });
 };
 
-const ProjectList = function ProjectList() {
+const ProjectList = function ProjectList(obj) {
   this.el = document.querySelector('div.projectList');
   this.list = new ListModelator(this.el.querySelector('ul'));
   this.modal = new Modal();
+
+  if (obj) {
+    obj.list.items.forEach((itm) => {
+      const mProject = new Project(
+        itm.name,
+        itm.description,
+        itm.dueDate,
+        itm.priority,
+        itm.checklist.items,
+      );
+      this.list.add(mProject);
+    });
+  }
 
   this.list.el.addEventListener('selectElement', (e) => {
     const prj = this.list.items[e.detail.index];
@@ -257,6 +276,10 @@ const ProjectList = function ProjectList() {
     });
   });
 
+  window.addEventListener('changeDetected', () => {
+    localStorage.setItem('ProjectList', JSON.stringify(this));
+  });
+
   const openModalBtn = this.el.querySelector('input[type="button"]');
   openModalBtn.onclick = () => this.modal.show().then((resp) => {
     if (resp) {
@@ -264,9 +287,6 @@ const ProjectList = function ProjectList() {
     }
   });
 
-
-  const mProject = new Project('titulo', 'descri', '10/10/2010', false);
-  this.list.add(mProject);
 
   if (this.list.items.length > 0) {
     this.list.selectElement(0);
@@ -285,4 +305,12 @@ ProjectList.prototype.addProject = function addProject(resp) {
 };
 
 // eslint-disable-next-line no-unused-vars
-const mProjectList = new ProjectList();
+let mProjectList;
+
+const lb = localStorage.getItem('ProjectList');
+
+if (lb) {
+  mProjectList = new ProjectList(JSON.parse(lb));
+} else {
+  mProjectList = new ProjectList();
+}
