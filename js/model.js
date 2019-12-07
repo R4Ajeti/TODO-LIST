@@ -193,6 +193,7 @@ SubTask.prototype.edit = function edit(e) {
 
   lis.forEach(li => {
     if (li.querySelector('input.edit')) {
+      li.children[2].onclick = null;
       li.removeChild(li.querySelector('input.edit'));
     }
     li.children[1].style.display = 'contents';
