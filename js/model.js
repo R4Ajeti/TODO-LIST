@@ -183,10 +183,7 @@ const Project = function Project(title, desc, dueDate, prior, checked = false, c
   this.checked = checked;
   this.priority = prior;
   this.modal = new Modal();
-
-  this.checklist = new ListModelator(
-    this.el.querySelector('div.checkList > ul'),
-  );
+  this.checklist = new ListModelator(this.el.querySelector('div.checkList > ul'));
 
   if (checklist) this.checklist.items = checklist;
 };
