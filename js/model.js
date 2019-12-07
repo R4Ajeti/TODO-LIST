@@ -102,15 +102,21 @@ ListModelator.prototype.display = function display() {
     compText.textContent = '<<Completed>>';
     compText.style.backgroundColor = 'green';
 
+    const ebtn = document.createElement('input');
+    ebtn.setAttribute('type', 'button');
+    ebtn.value = 'edit';
+    ebtn.onclick = e => { e.stopPropagation(); item.edit(e); };
 
     const li = document.createElement('li');
     li.setAttribute('index', index);
-    li.onclick = () => this.selectElement(index);
+    li.onclick = e => { e.stopPropagation(); this.selectElement(index); };
     li.style.backgroundColor = index === this.selected ? '#4a4a4a' : null;
+
 
     const cb = document.createElement('input');
     cb.setAttribute('type', 'checkbox');
     cb.onclick = e => {
+      e.stopPropagation();
       this.toggleCB(index, e);
     };
     cb.checked = item.checked;
@@ -122,20 +128,21 @@ ListModelator.prototype.display = function display() {
     const a = document.createElement('input');
     a.setAttribute('type', 'button');
     a.value = 'Remove';
-    a.onclick = () => {
+    a.onclick = e => {
+      e.stopPropagation();
       this.remove(index);
     };
 
     li.appendChild(cb);
     li.appendChild(lb);
+    li.appendChild(ebtn);
     li.appendChild(a);
 
     if (item.checked) {
       li.appendChild(compText);
     }
+
     ul.appendChild(li);
-    window.addEventListener('Projectupdated', () => this.display());
-    // this.el.querySelector('div.ui input[type="button"]').onclick = () => this.add();
   });
 
   const event = new Event('changeDetected');
@@ -175,6 +182,40 @@ ListModelator.prototype.selectElement = function selectElement(index) {
   this.display();
 };
 
+const SubTask = function SubTask(name, checked = false) {
+  this.checked = checked;
+  this.name = name;
+};
+
+SubTask.prototype.edit = function edit(e) {
+  const ul = e.target.closest('ul');
+  const lis = ul.querySelectorAll('li');
+
+  lis.forEach(li => {
+    if (li.querySelector('input.edit')) {
+      li.removeChild(li.querySelector('input.edit'));
+    }
+    li.children[1].style.display = 'contents';
+    const actBtn = li.children[2];
+    actBtn.value = 'edit';
+    actBtn.onclick = e => { e.stopPropagation(); this.edit(e); };
+  });
+
+
+  const el = e.target.closest('li');
+  const lb = el.children[1];
+  const a = document.createElement('input');
+  a.setAttribute('type', 'text');
+  a.setAttribute('class', 'edit');
+  a.value = lb.textContent;
+  a.onclick = e => { e.stopPropagation(); };
+  const actBtn = el.children[2];
+  actBtn.value = 'accept';
+  actBtn.onclick = e => { e.stopPropagation(); this.name = a.value; el.click(); };
+  el.insertBefore(a, el.children[1]);
+  lb.style.display = 'none';
+};
+
 const Project = function Project(title, desc, dueDate, prior, checked = false, checklist = null) {
   this.el = document.querySelector('div.project');
   this.name = title;
@@ -182,21 +223,27 @@ const Project = function Project(title, desc, dueDate, prior, checked = false, c
   this.dueDate = dueDate;
   this.checked = checked;
   this.priority = prior;
-  this.modal = new Modal();
   this.checklist = new ListModelator(this.el.querySelector('div.checkList > ul'));
 
-  if (checklist) this.checklist.items = checklist;
+  if (checklist) {
+    checklist.forEach(item => {
+      this.checklist.add(new SubTask(item.name, item.checked));
+    });
+  }
 };
 
 Project.prototype.edit = function edit() {
-  this.modal.edit(this).then(resp => {
-    this.name = resp.name;
-    this.description = resp.desc;
-    this.dueDate = resp.dueDate;
-    this.priority = resp.highPrior;
-    const event = new Event('Projectupdated');
-    window.dispatchEvent(event);
-    this.display();
+  const modal = new Modal();
+  modal.edit(this).then(resp => {
+    if (resp) {
+      this.name = resp.name;
+      this.description = resp.desc;
+      this.dueDate = resp.dueDate;
+      this.priority = resp.highPrior;
+      const event = new Event('Projectupdated');
+      window.dispatchEvent(event);
+      this.display();
+    }
   });
 };
 
@@ -238,10 +285,7 @@ Project.prototype.display = function display() {
 
 Project.prototype.addToCL = function addToCL() {
   const text = this.el.querySelector('div.ui input[type="text"]').value;
-  this.checklist.add({
-    checked: false,
-    name: text,
-  });
+  this.checklist.add(new SubTask(text));
 };
 
 const ProjectList = function ProjectList(obj) {
@@ -263,6 +307,7 @@ const ProjectList = function ProjectList(obj) {
     });
   }
 
+  window.addEventListener('Projectupdated', () => this.list.display());
 
   this.list.el.addEventListener('selectElement', e => {
     const prj = this.list.items[e.detail.index];
