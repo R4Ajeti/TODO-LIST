@@ -1,4 +1,5 @@
 /* eslint-env browser */
+/* eslint arrow-parens: ["error", "as-needed"] */
 
 const Modal = function Modal() {
   this.el = document.querySelector('.addForm');
@@ -17,9 +18,9 @@ Modal.prototype.show = function show() {
   this.el.style.display = 'block';
 
   return new Promise((res, rej) => {
-    this.buttons.forEach((btn) => {
+    this.buttons.forEach(btn => {
       const b = btn;
-      b.onclick = (e) => {
+      b.onclick = e => {
         this.hide();
         if (e.target.value === 'Accept') {
           res({
@@ -44,12 +45,12 @@ Modal.prototype.edit = function edit(item) {
   this.nameEl.value = item.name;
   this.descEl.value = item.description;
   this.dueDateEl.value = item.dueDate;
-  this.highPriorEl.checked = item.checked;
+  this.highPriorEl.checked = item.priority;
 
   return new Promise((res, rej) => {
-    this.buttons.forEach((btn) => {
+    this.buttons.forEach(btn => {
       const b = btn;
-      b.onclick = (e) => {
+      b.onclick = e => {
         this.hide();
         if (e.target.value === 'Accept') {
           res({
@@ -73,7 +74,7 @@ Modal.prototype.clear = function clear() {
   this.descEl.value = null;
   this.dueDateEl.value = null;
   this.highPriorEl.checked = false;
-  this.buttons.forEach((btn) => {
+  this.buttons.forEach(btn => {
     const b = btn;
     b.onclick = null;
   });
@@ -97,14 +98,6 @@ ListModelator.prototype.display = function display() {
     ul.removeChild(ul.firstChild);
   }
   this.items.forEach((item, index) => {
-    const pb = document.createElement('input');
-    pb.setAttribute('type', 'button');
-    pb.value = 'Edit';
-    pb.onclick = () => {
-      const event = new CustomEvent('editElement', { detail: { item } });
-      this.el.dispatchEvent(event);
-    };
-
     const compText = document.createElement('span');
     compText.textContent = '<<Completed>>';
     compText.style.backgroundColor = 'green';
@@ -117,7 +110,7 @@ ListModelator.prototype.display = function display() {
 
     const cb = document.createElement('input');
     cb.setAttribute('type', 'checkbox');
-    cb.onclick = (e) => {
+    cb.onclick = e => {
       this.toggleCB(index, e);
     };
     cb.checked = item.checked;
@@ -126,22 +119,22 @@ ListModelator.prototype.display = function display() {
     const lb = document.createElement('label');
     lb.textContent = item.name;
 
-    const a = document.createElement('a');
-    a.setAttribute('href', '#');
-    a.textContent = ' -> Remove';
+    const a = document.createElement('input');
+    a.setAttribute('type', 'button');
+    a.value = 'Remove';
     a.onclick = () => {
       this.remove(index);
     };
 
     li.appendChild(cb);
     li.appendChild(lb);
-    li.appendChild(pb);
     li.appendChild(a);
 
     if (item.checked) {
       li.appendChild(compText);
     }
     ul.appendChild(li);
+    window.addEventListener('Projectupdated', () => this.display());
     // this.el.querySelector('div.ui input[type="button"]').onclick = () => this.add();
   });
 
@@ -176,17 +169,20 @@ ListModelator.prototype.selectElement = function selectElement(index) {
   });
   this.el.dispatchEvent(event);
 
-  this.selected = index;
+  if (this.items[index]) {
+    this.selected = index;
+  }
   this.display();
 };
 
-const Project = function Project(title, description, dueDate, priority, checklist = null) {
+const Project = function Project(title, desc, dueDate, prior, checked = false, checklist = null) {
   this.el = document.querySelector('div.project');
   this.name = title;
-  this.description = description;
+  this.description = desc;
   this.dueDate = dueDate;
-  this.checked = false;
-  this.priority = priority;
+  this.checked = checked;
+  this.priority = prior;
+  this.modal = new Modal();
 
   this.checklist = new ListModelator(
     this.el.querySelector('div.checkList > ul'),
@@ -195,12 +191,25 @@ const Project = function Project(title, description, dueDate, priority, checklis
   if (checklist) this.checklist.items = checklist;
 };
 
+Project.prototype.edit = function edit() {
+  this.modal.edit(this).then(resp => {
+    this.name = resp.name;
+    this.description = resp.desc;
+    this.dueDate = resp.dueDate;
+    this.priority = resp.highPrior;
+    const event = new Event('Projectupdated');
+    window.dispatchEvent(event);
+    this.display();
+  });
+};
+
 Project.prototype.display = function display() {
   this.el.style.display = 'block';
   const titleEl = this.el.querySelector('h1');
   const descEl = this.el.querySelector('div > p');
   const dueDateEl = this.el.querySelector('div > span');
   const highPriorEl = this.el.querySelector('label.highPriorLB');
+  const editEl = this.el.querySelector('input.edit');
 
   const addBtn = this.el.querySelector('div.ui input[type="button"]');
   addBtn.onclick = () => this.addToCL();
@@ -225,6 +234,8 @@ Project.prototype.display = function display() {
     highPriorEl.appendChild(compText);
   }
 
+  editEl.onclick = () => { this.edit(); };
+
   this.checklist.display();
 };
 
@@ -242,19 +253,21 @@ const ProjectList = function ProjectList(obj) {
   this.modal = new Modal();
 
   if (obj) {
-    obj.list.items.forEach((itm) => {
+    obj.list.items.forEach(itm => {
       const mProject = new Project(
         itm.name,
         itm.description,
         itm.dueDate,
         itm.priority,
+        itm.checked,
         itm.checklist.items,
       );
       this.list.add(mProject);
     });
   }
 
-  this.list.el.addEventListener('selectElement', (e) => {
+
+  this.list.el.addEventListener('selectElement', e => {
     const prj = this.list.items[e.detail.index];
     if (prj) {
       prj.display();
@@ -270,18 +283,12 @@ const ProjectList = function ProjectList(obj) {
     }
   });
 
-  this.list.el.addEventListener('editElement', (e) => {
-    this.modal.edit(e.detail.item).then((resp) => {
-
-    });
-  });
-
   window.addEventListener('changeDetected', () => {
     localStorage.setItem('ProjectList', JSON.stringify(this));
   });
 
   const openModalBtn = this.el.querySelector('input[type="button"]');
-  openModalBtn.onclick = () => this.modal.show().then((resp) => {
+  openModalBtn.onclick = () => this.modal.show().then(resp => {
     if (resp) {
       this.addProject(resp);
     }
