@@ -92,7 +92,6 @@ const ListModelator = function ListModelator(el) {
 };
 
 ListModelator.prototype.display = function display() {
-  console.log('displaying');
   const ul = this.el;
 
   while (ul.firstChild) {
