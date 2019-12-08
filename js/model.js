@@ -92,6 +92,7 @@ const ListModelator = function ListModelator(el) {
 };
 
 ListModelator.prototype.display = function display() {
+  console.log('displaying');
   const ul = this.el;
 
   while (ul.firstChild) {
@@ -104,6 +105,7 @@ ListModelator.prototype.display = function display() {
 
     const ebtn = document.createElement('input');
     ebtn.setAttribute('type', 'button');
+    ebtn.setAttribute('class', 'edit');
     ebtn.value = 'edit';
     ebtn.onclick = e => { e.stopPropagation(); item.edit(e); };
 
@@ -189,32 +191,34 @@ const SubTask = function SubTask(name, checked = false) {
 
 SubTask.prototype.edit = function edit(e) {
   const ul = e.target.closest('ul');
-  const lis = ul.querySelectorAll('li');
 
-  lis.forEach(li => {
-    if (li.querySelector('input.edit')) {
-      li.children[2].onclick = null;
-      li.removeChild(li.querySelector('input.edit'));
+  Array.from(ul.children).forEach(li => {
+    const tmps = li.querySelectorAll('.tmp');
+
+    if (tmps.length > 0) {
+      li.removeChild(tmps[0]);
+      li.removeChild(tmps[1]);
     }
-    li.children[1].style.display = 'contents';
-    const actBtn = li.children[2];
-    actBtn.value = 'edit';
-    actBtn.onclick = e => { e.stopPropagation(); this.edit(e); };
+
+    li.children[1].style.display = 'initial';
+    li.children[2].style.display = 'initial';
   });
 
-
   const el = e.target.closest('li');
-  const lb = el.children[1];
-  const a = document.createElement('input');
-  a.setAttribute('type', 'text');
-  a.setAttribute('class', 'edit');
-  a.value = lb.textContent;
-  a.onclick = e => { e.stopPropagation(); };
-  const actBtn = el.children[2];
-  actBtn.value = 'accept';
-  actBtn.onclick = e => { e.stopPropagation(); this.name = a.value; el.click(); };
-  el.insertBefore(a, el.children[1]);
-  lb.style.display = 'none';
+  el.children[1].style.display = 'none';
+  el.children[2].style.display = 'none';
+  const editText = document.createElement('input');
+  editText.setAttribute('type', 'text');
+  editText.className = 'tmp';
+  editText.onclick = e => e.stopPropagation();
+  editText.value = this.name;
+  const editBnt = document.createElement('input');
+  editBnt.setAttribute('type', 'button');
+  editBnt.value = 'accept';
+  editBnt.className = 'tmp';
+  editBnt.onclick = e => { e.stopPropagation(); this.name = editText.value; el.click(); };
+  el.insertBefore(editText, el.children[2]);
+  el.insertBefore(editBnt, el.children[3]);
 };
 
 const Project = function Project(title, desc, dueDate, prior, checked = false, checklist = null) {
